@@ -5,6 +5,7 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
         
         links
         {
+            "dxguid.lib",
             "dinput8.lib"
         }
         
@@ -26,7 +27,7 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
                 "d3d9.lib",
                 "d3dx9.lib",
                 "MSVCRT.LIB",
-                "dxguid.lib",
+                
             }
 
         filter { "architecture:*64" }

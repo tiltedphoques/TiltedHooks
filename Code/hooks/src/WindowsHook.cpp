@@ -19,7 +19,8 @@ LRESULT CALLBACK HookWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     auto pCallback = WindowsHook::Get().GetCallback();
     if (pCallback)
     {
-        pCallback(hwnd, uMsg, wParam, lParam);
+        if (pCallback(hwnd, uMsg, wParam, lParam) != 0)
+            return 0;
     }
 
     return RealWndProc(hwnd, uMsg, wParam, lParam);

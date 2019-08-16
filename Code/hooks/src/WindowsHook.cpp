@@ -58,7 +58,7 @@ ATOM __stdcall HookRegisterClassExW(WNDCLASSEXW* lpWndClass)
     return RealRegisterClassExW(lpWndClass);
 }
 
-void WindowsHook::Install()
+void WindowsHook::Install() noexcept
 {
     TP_HOOK_IAT(RegisterClassA, "user32.dll");
     TP_HOOK_IAT(RegisterClassW, "user32.dll");

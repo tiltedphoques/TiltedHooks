@@ -260,7 +260,8 @@ D3D9Hook::D3D9Hook() noexcept
 
 void D3D9Hook::Install()
 {
-    RealDirect3DCreate9 = reinterpret_cast<TDirect3DCreate9>(TP_HOOK_SYSTEM("d3d9.dll", "Direct3DCreate9", HookDirect3DCreate9));
+    if(RealDirect3DCreate9 == nullptr)
+        RealDirect3DCreate9 = reinterpret_cast<TDirect3DCreate9>(TP_HOOK_SYSTEM("d3d9.dll", "Direct3DCreate9", HookDirect3DCreate9));
 }
 
 D3D9Hook& D3D9Hook::Get()

@@ -179,7 +179,7 @@ static HRESULT _stdcall HookDirectInput8Create(HINSTANCE instance, DWORD version
     return result;
 }
 
-void DInputHook::Install()
+void DInputHook::Install() noexcept
 {
     TP_HOOK_IAT(DirectInput8Create, "dinput8.dll");
 }

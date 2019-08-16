@@ -3,6 +3,11 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
         kind ("StaticLib")
         language ("C++")
         
+        links
+        {
+            "dinput8.lib"
+        }
+        
         filter { "architecture:*86" }
 
             includedirs

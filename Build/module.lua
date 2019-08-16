@@ -6,46 +6,34 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
         links
         {
             "dxguid.lib",
-            "dinput8.lib"
+            "dinput8.lib",
+            "d3d9.lib",
+            "d3d11.lib",
+            "d3dx9.lib",
+            "MSVCRT.LIB",
+            "DirectXTK.lib"
+        }
+        
+        includedirs
+        {
+            "$(DXSDK_DIR)/Include",
+            basePath .. "/ThirdParty/DirectXTK/include"
         }
         
         filter { "architecture:*86" }
-
-            includedirs
-            {
-                "$(DXSDK_DIR)/Include"
-            }
-
             libdirs 
             {
                 "$(DXSDK_DIR)/Lib/x86",
-                "$(VsInstallDir)DIA SDK/lib"
-            }
-
-            links
-            {
-                "d3d9.lib",
-                "d3dx9.lib",
-                "MSVCRT.LIB",
-                
+                "$(VsInstallDir)DIA SDK/lib",
+                basePath .. "/ThirdParty/DirectXTK/lib/x32"
             }
 
         filter { "architecture:*64" }
-
-            includedirs
-            {
-                basePath .. "/ThirdParty/DirectXTK"
-            }
-
             libdirs 
             {
-                "$(VsInstallDir)DIA SDK/lib/amd64"
-            }
-
-            links
-            {
-                "d3d11.lib",
-                basePath .. "/ThirdParty/DirectXTK.lib",
+                "$(DXSDK_DIR)/Lib/x64",
+                "$(VsInstallDir)DIA SDK/lib/amd64",
+                basePath .. "/ThirdParty/DirectXTK/lib/x64"
             }
             
         filter {}

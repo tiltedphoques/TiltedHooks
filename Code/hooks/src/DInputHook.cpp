@@ -118,32 +118,37 @@ DirectInputDeviceWrapper::DirectInputDeviceWrapper(IDirectInputDevice8A* aDevice
 
 HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceState(DWORD outDataLen, LPVOID outData)
 {
-    if (DInputHook::Get().IsInputBlocked())
-        return DIERR_INPUTLOST;
+    if (DInputHook::Get().IsEnabled())
+    {
+        std::memset(outData, 0, outDataLen);
+        return 0;
+    }
 
     return m_pRealDevice->GetDeviceState(outDataLen, outData);
 }
 
 HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceData(DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags)
 {
-    const auto result = m_pRealDevice->GetDeviceData(dataSize, outData, outDataLen, flags);
-
     auto& input = DInputHook::Get();
 
+    const auto result = m_pRealDevice->GetDeviceData(dataSize, outData, outDataLen, flags);
+
+    if (input.IsEnabled())
+    {
+        *outDataLen = 0;
+
+        return result;
+    }
+        
     if (m_guid == GUID_SysKeyboard)
     {
         for (DWORD i = 0; i < *outDataLen; ++i)
         {
             if (input.IsToggleKey(outData[i].dwOfs) && outData[i].dwData & 0x80)
             {
-                input.SetInputBlocked(!input.IsInputBlocked());
+                DInputHook::Get().SetEnabled(true);
             }
         }
-    }
-
-    if (input.IsInputBlocked())
-    {
-        return DIERR_OTHERAPPHASPRIO;
     }
 
     return result;
@@ -164,9 +169,6 @@ ULONG _stdcall DirectInputDeviceWrapper::Release(void)
 
 HRESULT _stdcall DirectInputDeviceWrapper::Acquire(void)
 {
-    if(DInputHook::Get().IsInputBlocked())
-        return DIERR_OTHERAPPHASPRIO;
-
     return m_pRealDevice->Acquire();    
 }
 
@@ -232,4 +234,41 @@ DInputHook& DInputHook::Get()
 {
     static DInputHook s_instance;
     return s_instance;
+}
+
+void DInputHook::Update() const
+{
+    RAWINPUTDEVICE device[2];
+
+    device[0].usUsagePage = 0x01;
+    device[0].usUsage = 0x06;
+    device[0].dwFlags = RIDEV_REMOVE;
+    device[0].hwndTarget = nullptr;
+
+    device[1].usUsagePage = 0x01;
+    device[1].usUsage = 0x02;
+    device[1].dwFlags =  RIDEV_REMOVE;
+    device[1].hwndTarget = nullptr;
+
+    RegisterRawInputDevices(device, sizeof(device) / sizeof(RAWINPUTDEVICE), sizeof(RAWINPUTDEVICE));
+
+    if (m_enabled)
+    {
+        for (const auto pDevice : DirectInputDeviceWrapper::s_devices)
+        {
+            pDevice->Acquire();
+        }
+
+        device[0].dwFlags = 0;
+        device[1].dwFlags = 0;
+
+        RegisterRawInputDevices(device, sizeof(device) / sizeof(RAWINPUTDEVICE), sizeof(RAWINPUTDEVICE));
+    }
+    else
+    {
+        for (const auto pDevice : DirectInputDeviceWrapper::s_devices)
+        {
+            pDevice->Unacquire();
+        }
+    }
 }

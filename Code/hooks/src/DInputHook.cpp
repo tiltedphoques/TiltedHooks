@@ -43,6 +43,8 @@ struct DirectInputDeviceWrapper : IDirectInputDevice8A
     HRESULT _stdcall SetActionMap(LPDIACTIONFORMATA a, LPCSTR b, DWORD c) { return m_pRealDevice->SetActionMap(a, b, c); }
     HRESULT _stdcall GetImageInfo(LPDIDEVICEIMAGEINFOHEADERA a) { return m_pRealDevice->GetImageInfo(a); }
 
+    static Set<DirectInputDeviceWrapper*> s_devices;
+
 private:
 
     IDirectInputDevice8A* m_pRealDevice;
@@ -83,7 +85,7 @@ DirectInputWrapper::DirectInputWrapper(IDirectInput8A* apDirectInput) noexcept
 
 HRESULT _stdcall DirectInputWrapper::CreateDevice(REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused)
 {
-    HRESULT result = m_pDirectInput->CreateDevice(typeGuid, (LPDIRECTINPUTDEVICE8A*)& m_pDevice, unused);
+    const auto result = m_pDirectInput->CreateDevice(typeGuid, reinterpret_cast<LPDIRECTINPUTDEVICE8A*>(& m_pDevice), unused);
 
     if (result == DI_OK)
     {
@@ -105,10 +107,13 @@ ULONG _stdcall DirectInputWrapper::Release(void)
     return count;
 }
 
+Set<DirectInputDeviceWrapper*> DirectInputDeviceWrapper::s_devices;
+
 DirectInputDeviceWrapper::DirectInputDeviceWrapper(IDirectInputDevice8A* aDevice, GUID aGuid) noexcept
     : m_pRealDevice(aDevice)
     , m_guid(aGuid)
 {
+    s_devices.insert(this);
 }
 
 HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceState(DWORD outDataLen, LPVOID outData)
@@ -121,7 +126,7 @@ HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceState(DWORD outDataLen, LPVO
 
 HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceData(DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags)
 {
-    auto result = m_pRealDevice->GetDeviceData(dataSize, outData, outDataLen, flags);
+    const auto result = m_pRealDevice->GetDeviceData(dataSize, outData, outDataLen, flags);
 
     auto& input = DInputHook::Get();
 
@@ -149,7 +154,10 @@ ULONG _stdcall DirectInputDeviceWrapper::Release(void)
     ULONG count = m_pRealDevice->Release();
 
     if (count == 0)
+    {
+        s_devices.erase(this);
         Delete(this);
+    }
 
     return count;
 }
@@ -202,6 +210,22 @@ void DInputHook::SetToggleKeys(std::initializer_list<unsigned long> aKeys)
 bool DInputHook::IsToggleKey(unsigned int aKey) const noexcept
 {
     return m_toggleKeys.count(aKey) > 0;
+}
+
+void DInputHook::Acquire() const noexcept
+{
+    for(auto& device : DirectInputDeviceWrapper::s_devices)
+    {
+        device->Acquire();
+    }
+}
+
+void DInputHook::Unacquire() const noexcept
+{
+    for (auto& device : DirectInputDeviceWrapper::s_devices)
+    {
+        device->Unacquire();
+    }
 }
 
 DInputHook& DInputHook::Get()

@@ -9,13 +9,18 @@ struct DInputHook
     DInputHook& operator=(DInputHook&&) = delete;
     DInputHook& operator=(const DInputHook&) = delete;
 
-    bool IsInputBlocked() const noexcept { return m_blockInput; }
+    [[nodiscard]] bool IsInputBlocked() const noexcept { return m_blockInput; }
     void SetInputBlocked(bool aBlockInput) noexcept { m_blockInput = aBlockInput; }
     void SetToggleKeys(std::initializer_list<unsigned long> aKeys);
-    bool IsToggleKey(unsigned int aKey) const noexcept;
+    [[nodiscard]] bool IsToggleKey(unsigned int aKey) const noexcept;
+
+    void Acquire() const noexcept;
+    void Unacquire() const noexcept;
 
     static void Install() noexcept;
     static DInputHook& Get();
+
+
 
 private:
 

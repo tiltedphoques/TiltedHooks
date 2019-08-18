@@ -238,9 +238,6 @@ HRESULT IDirect3DDevice9Hook::Present(CONST RECT* pSourceRect, CONST RECT* pDest
 {
     D3D9Hook::Get().OnPresent(m_pIDirect3DDevice9);
 
-    D3DRECT rec = { 1, 1, 50, 50 };
-    m_pIDirect3DDevice9->Clear(1, &rec, D3DCLEAR_TARGET, D3DCOLOR_ARGB(255, 255, 255, 0), 0, 0);
-
     const auto result = m_pIDirect3DDevice9->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 
     return result;

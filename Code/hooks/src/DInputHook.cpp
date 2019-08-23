@@ -196,7 +196,7 @@ void DInputHook::Install() noexcept
 
 DInputHook::DInputHook() noexcept
 {
-    m_toggleKeys.insert(DIK_RCONTROL);
+    SetToggleKeys({ DIK_RCONTROL });
 }
 
 void DInputHook::SetToggleKeys(std::initializer_list<unsigned long> aKeys)

@@ -41,7 +41,7 @@ HRESULT HookD3D11CreateDeviceAndSwapChain(_In_opt_ IDXGIAdapter* pAdapter, D3D_D
 {
     const auto result = RealD3D11CreateDeviceAndSwapChain(pAdapter, DriverType, Software, Flags, pFeatureLevels, FeatureLevels, SDKVersion, pSwapChainDesc, ppSwapChain, ppDevice, pFeatureLevel, ppImmediateContext);
 
-    if(RealDXGISwapChainPresent == nullptr)
+    if(RealDXGISwapChainPresent == nullptr && ppSwapChain)
         RealDXGISwapChainPresent = HookVTable(*ppSwapChain, 8, &HookDXGISwapChainPresent);
 
     return result;

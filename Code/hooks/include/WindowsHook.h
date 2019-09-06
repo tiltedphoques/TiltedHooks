@@ -1,24 +1,25 @@
 #pragma once
 
 #include <Windows.h>
+#include <Meta.h>
 
-struct WindowsHook
+namespace TiltedPhoques
 {
-    WindowsHook(WindowsHook&&) = delete;
-    WindowsHook(const WindowsHook&) = delete;
-    WindowsHook& operator=(WindowsHook&&) = delete;
-    WindowsHook& operator=(const WindowsHook&) = delete;
+	struct WindowsHook
+	{
+		TP_NOCOPYMOVE(WindowsHook);
 
-    void SetCallback(WNDPROC apCallback) noexcept { m_pCallback = apCallback; }
-    [[nodiscard]] WNDPROC GetCallback() const noexcept { return m_pCallback; }
+		void SetCallback(WNDPROC apCallback) noexcept { m_pCallback = apCallback; }
+		[[nodiscard]] WNDPROC GetCallback() const noexcept { return m_pCallback; }
 
-    static void Install() noexcept;
-    static WindowsHook& Get();
+		static void Install() noexcept;
+		static WindowsHook& Get() noexcept;
 
-private:
+	private:
 
-    WindowsHook() = default;
-    ~WindowsHook() = default;
+		WindowsHook() noexcept = default;
+		~WindowsHook() noexcept = default;
 
-    WNDPROC m_pCallback{ nullptr };
-};
+		WNDPROC m_pCallback{ nullptr };
+	};
+}

@@ -14,60 +14,65 @@ TRegisterClassExW RealRegisterClassExW = nullptr;
 
 static WNDPROC RealWndProc;
 
-LRESULT CALLBACK HookWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+namespace TiltedPhoques
 {
-    auto pCallback = WindowsHook::Get().GetCallback();
-    if (pCallback)
-    {
-        if (pCallback(hwnd, uMsg, wParam, lParam) != 0)
-            return 0;
-    }
 
-    return RealWndProc(hwnd, uMsg, wParam, lParam);
-}
+	LRESULT CALLBACK HookWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		auto pCallback = WindowsHook::Get().GetCallback();
+		if (pCallback)
+		{
+			if (pCallback(hwnd, uMsg, wParam, lParam) != 0)
+				return 0;
+		}
 
-ATOM __stdcall HookRegisterClassA(WNDCLASSA* lpWndClass)
-{
-    RealWndProc = lpWndClass->lpfnWndProc;
-    lpWndClass->lpfnWndProc = HookWndProc;
+		return RealWndProc(hwnd, uMsg, wParam, lParam);
+	}
 
-    return RealRegisterClassA(lpWndClass);
-}
+	ATOM __stdcall HookRegisterClassA(WNDCLASSA* lpWndClass)
+	{
+		RealWndProc = lpWndClass->lpfnWndProc;
+		lpWndClass->lpfnWndProc = HookWndProc;
 
-ATOM __stdcall HookRegisterClassW(WNDCLASSW* lpWndClass)
-{
-    RealWndProc = lpWndClass->lpfnWndProc;
-    lpWndClass->lpfnWndProc = HookWndProc;
+		return RealRegisterClassA(lpWndClass);
+	}
 
-    return RealRegisterClassW(lpWndClass);
-}
+	ATOM __stdcall HookRegisterClassW(WNDCLASSW* lpWndClass)
+	{
+		RealWndProc = lpWndClass->lpfnWndProc;
+		lpWndClass->lpfnWndProc = HookWndProc;
 
-ATOM __stdcall HookRegisterClassExA(WNDCLASSEXA* lpWndClass)
-{
-    RealWndProc = lpWndClass->lpfnWndProc;
-    lpWndClass->lpfnWndProc = HookWndProc;
+		return RealRegisterClassW(lpWndClass);
+	}
 
-    return RealRegisterClassExA(lpWndClass);
-}
+	ATOM __stdcall HookRegisterClassExA(WNDCLASSEXA* lpWndClass)
+	{
+		RealWndProc = lpWndClass->lpfnWndProc;
+		lpWndClass->lpfnWndProc = HookWndProc;
 
-ATOM __stdcall HookRegisterClassExW(WNDCLASSEXW* lpWndClass)
-{
-    RealWndProc = lpWndClass->lpfnWndProc;
-    lpWndClass->lpfnWndProc = HookWndProc;
+		return RealRegisterClassExA(lpWndClass);
+	}
 
-    return RealRegisterClassExW(lpWndClass);
-}
+	ATOM __stdcall HookRegisterClassExW(WNDCLASSEXW* lpWndClass)
+	{
+		RealWndProc = lpWndClass->lpfnWndProc;
+		lpWndClass->lpfnWndProc = HookWndProc;
 
-void WindowsHook::Install() noexcept
-{
-    TP_HOOK_IAT(RegisterClassA, "user32.dll");
-    TP_HOOK_IAT(RegisterClassW, "user32.dll");
-    TP_HOOK_IAT(RegisterClassExA, "user32.dll");
-    TP_HOOK_IAT(RegisterClassExW, "user32.dll");
-}
+		return RealRegisterClassExW(lpWndClass);
+	}
 
-WindowsHook& WindowsHook::Get()
-{
-    static WindowsHook s_instance;
-    return s_instance;
+	void WindowsHook::Install() noexcept
+	{
+		TP_HOOK_IAT(RegisterClassA, "user32.dll");
+		TP_HOOK_IAT(RegisterClassW, "user32.dll");
+		TP_HOOK_IAT(RegisterClassExA, "user32.dll");
+		TP_HOOK_IAT(RegisterClassExW, "user32.dll");
+	}
+
+	WindowsHook& WindowsHook::Get() noexcept
+	{
+		static WindowsHook s_instance;
+		return s_instance;
+	}
+
 }

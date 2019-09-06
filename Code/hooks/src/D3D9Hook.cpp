@@ -18,78 +18,82 @@ static TPresent RealPresent = nullptr;
 static TCreateDevice RealCreateDevice = nullptr;
 static TDirect3DCreate9 RealDirect3DCreate9 = nullptr;
 
-static HRESULT __stdcall HookReset(IDirect3DDevice9* pDevice, D3DPRESENT_PARAMETERS* pPresentationParameters)
+namespace TiltedPhoques
 {
-    TP_EMPTY_HOOK_PLACEHOLDER;
 
-    const auto result = RealReset(pDevice, pPresentationParameters);
+	static HRESULT __stdcall HookReset(IDirect3DDevice9* pDevice, D3DPRESENT_PARAMETERS* pPresentationParameters)
+	{
+		TP_EMPTY_HOOK_PLACEHOLDER;
 
-    D3D9Hook::Get().OnReset(pDevice);
+		const auto result = RealReset(pDevice, pPresentationParameters);
 
-    return result;
-}
+		D3D9Hook::Get().OnReset(pDevice);
 
-static HRESULT __stdcall HookPresent(IDirect3DDevice9* pDevice, RECT* pSourceRect, RECT* pDestRect, HWND hDestWindowOverride, RGNDATA* pDirtyRegion)
-{
-    TP_EMPTY_HOOK_PLACEHOLDER;
+		return result;
+	}
 
-    D3D9Hook::Get().OnPresent(pDevice);
+	static HRESULT __stdcall HookPresent(IDirect3DDevice9* pDevice, RECT* pSourceRect, RECT* pDestRect, HWND hDestWindowOverride, RGNDATA* pDirtyRegion)
+	{
+		TP_EMPTY_HOOK_PLACEHOLDER;
 
-    const auto result = RealPresent(pDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+		D3D9Hook::Get().OnPresent(pDevice);
 
-    return result;
-}
+		const auto result = RealPresent(pDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 
-HRESULT __stdcall HookCreateDevice(IDirect3D9* apDirect3D9, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface)
-{
-    TP_EMPTY_HOOK_PLACEHOLDER;
+		return result;
+	}
 
-    const auto result = RealCreateDevice(apDirect3D9, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
+	HRESULT __stdcall HookCreateDevice(IDirect3D9* apDirect3D9, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DDevice9** ppReturnedDeviceInterface)
+	{
+		TP_EMPTY_HOOK_PLACEHOLDER;
 
-    const auto pDevice = *ppReturnedDeviceInterface;
+		const auto result = RealCreateDevice(apDirect3D9, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
 
-    if (RealReset == nullptr)
-    {
-        RealReset = pDevice->lpVtbl->Reset;
-        TP_HOOK_IMMEDIATE(&RealReset, HookReset);
-    }
+		const auto pDevice = *ppReturnedDeviceInterface;
 
-    if (RealPresent == nullptr)
-    {
-        RealPresent = pDevice->lpVtbl->Present;
-        TP_HOOK_IMMEDIATE(&RealPresent, HookPresent);
-    }
+		if (RealReset == nullptr)
+		{
+			RealReset = pDevice->lpVtbl->Reset;
+			TP_HOOK_IMMEDIATE(&RealReset, HookReset);
+		}
 
-    D3D9Hook::Get().OnCreate(apDirect3D9, pDevice);
+		if (RealPresent == nullptr)
+		{
+			RealPresent = pDevice->lpVtbl->Present;
+			TP_HOOK_IMMEDIATE(&RealPresent, HookPresent);
+		}
 
-    return result;
-}
+		D3D9Hook::Get().OnCreate(apDirect3D9, pDevice);
 
-static IDirect3D9* WINAPI HookDirect3DCreate9(UINT SDKVersion)
-{
-    IDirect3D9* pIDirect3D9 = RealDirect3DCreate9(SDKVersion);
+		return result;
+	}
 
-    if (RealCreateDevice == nullptr)
-    {
-        RealCreateDevice = pIDirect3D9->lpVtbl->CreateDevice;
-        TP_HOOK_IMMEDIATE(&RealCreateDevice, HookCreateDevice);
-    }
+	static IDirect3D9* WINAPI HookDirect3DCreate9(UINT SDKVersion)
+	{
+		IDirect3D9* pIDirect3D9 = RealDirect3DCreate9(SDKVersion);
 
-    return pIDirect3D9;
-}
+		if (RealCreateDevice == nullptr)
+		{
+			RealCreateDevice = pIDirect3D9->lpVtbl->CreateDevice;
+			TP_HOOK_IMMEDIATE(&RealCreateDevice, HookCreateDevice);
+		}
 
-D3D9Hook::D3D9Hook() noexcept
-{
-}
+		return pIDirect3D9;
+	}
 
-void D3D9Hook::Install()
-{
-    if(RealDirect3DCreate9 == nullptr)
-        RealDirect3DCreate9 = reinterpret_cast<TDirect3DCreate9>(TP_HOOK_SYSTEM("d3d9.dll", "Direct3DCreate9", HookDirect3DCreate9));
-}
+	D3D9Hook::D3D9Hook() noexcept
+	{
+	}
 
-D3D9Hook& D3D9Hook::Get()
-{
-    static D3D9Hook s_instance;
-    return s_instance;
+	void D3D9Hook::Install() noexcept
+	{
+		if (RealDirect3DCreate9 == nullptr)
+			RealDirect3DCreate9 = reinterpret_cast<TDirect3DCreate9>(TP_HOOK_SYSTEM("d3d9.dll", "Direct3DCreate9", HookDirect3DCreate9));
+	}
+
+	D3D9Hook& D3D9Hook::Get() noexcept
+	{
+		static D3D9Hook s_instance;
+		return s_instance;
+	}
 }

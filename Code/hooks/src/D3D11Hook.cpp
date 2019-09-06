@@ -1,8 +1,8 @@
-#include <D3D11Hook.h>
+#include <D3D11Hook.hpp>
 
 #include <d3d11.h>
 
-#include <FunctionHook.h>
+#include <FunctionHook.hpp>
 #include <mutex>
 
 using TDXGISwapChainPresent = HRESULT(STDMETHODCALLTYPE*)(IDXGISwapChain* This, UINT SyncInterval, UINT Flags);

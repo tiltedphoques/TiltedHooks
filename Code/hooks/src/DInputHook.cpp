@@ -1,7 +1,7 @@
-#include <DInputHook.h>
+#include <DInputHook.hpp>
 #include <dinput.h>
 
-#include <FunctionHook.h>
+#include <FunctionHook.hpp>
 
 namespace TiltedPhoques
 {

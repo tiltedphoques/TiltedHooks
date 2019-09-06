@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Signal.h>
+#include <Signal.hpp>
 
 struct IDXGISwapChain;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Signal.h>
+#include <Signal.hpp>
 
 struct IDirect3D9;
 struct IDirect3DDevice9;

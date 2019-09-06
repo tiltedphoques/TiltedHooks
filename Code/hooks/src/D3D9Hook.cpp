@@ -1,10 +1,10 @@
-#include <D3D9Hook.h>
+#include <D3D9Hook.hpp>
 
 #define CINTERFACE
 
 #include <d3d9.h>
 
-#include <FunctionHook.h>
+#include <FunctionHook.hpp>
 #include <mutex>
 #include <intrin.h>
 

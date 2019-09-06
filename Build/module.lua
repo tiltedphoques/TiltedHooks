@@ -48,7 +48,7 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
 
         files
         {
-            basePath .. "/Code/hooks/include/**.h",
+            basePath .. "/Code/hooks/include/**.hpp",
             basePath .. "/Code/hooks/src/**.cpp",
         }
         

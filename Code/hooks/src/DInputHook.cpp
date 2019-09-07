@@ -1,124 +1,26 @@
 #include <DInputHook.hpp>
+
+#define CINTERFACE
+
 #include <dinput.h>
 
 #include <FunctionHook.hpp>
 
 namespace TiltedPhoques
 {
-	struct DirectInputDeviceWrapper : IDirectInputDevice8A
-	{
-		TP_ALLOCATOR
+	using TIDirectInputA_CreateDevice = HRESULT(_stdcall*)(IDirectInput8A* pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused);
+	using TIDirectInputDevice8A_GetDeviceState =  HRESULT(_stdcall*)(IDirectInputDevice8A* apDevice, DWORD outDataLen, LPVOID outData);
+	using TIDirectInputDevice8A_GetDeviceData =  HRESULT(_stdcall*)(IDirectInputDevice8A* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags);
+	using TDirectInput8Create = HRESULT(_stdcall*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 
-		DirectInputDeviceWrapper(IDirectInputDevice8A* aDevice, GUID aGuid) noexcept;
+	static TIDirectInputA_CreateDevice RealIDirectInputA_CreateDevice = nullptr;
+	static TIDirectInputDevice8A_GetDeviceState RealIDirectInputDevice8A_GetDeviceState = nullptr;
+	static TIDirectInputDevice8A_GetDeviceData RealIDirectInputDevice8A_GetDeviceData = nullptr;
+	static TDirectInput8Create RealDirectInput8Create = nullptr;
 
-		ULONG _stdcall AddRef(void) override { return m_pRealDevice->AddRef(); }
-		ULONG _stdcall Release(void);
+	static Set<LPDIRECTINPUTDEVICE8A> s_devices;
 
-		HRESULT _stdcall GetDeviceState(DWORD outDataLen, LPVOID outData);
-		HRESULT _stdcall GetDeviceData(DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags);
-		HRESULT _stdcall SetCooperativeLevel(HWND window, DWORD flags) { return m_pRealDevice->SetCooperativeLevel(window, flags); }
-		HRESULT _stdcall QueryInterface(REFIID a, LPVOID* b) { return m_pRealDevice->QueryInterface(a, b); }
-		HRESULT _stdcall GetCapabilities(LPDIDEVCAPS a) { return m_pRealDevice->GetCapabilities(a); }
-		HRESULT _stdcall EnumObjects(LPDIENUMDEVICEOBJECTSCALLBACKA a, LPVOID b, DWORD c) { return m_pRealDevice->EnumObjects(a, b, c); }
-		HRESULT _stdcall GetProperty(REFGUID a, DIPROPHEADER* b) { return m_pRealDevice->GetProperty(a, b); }
-		HRESULT _stdcall SetProperty(REFGUID a, const DIPROPHEADER* b) { return m_pRealDevice->SetProperty(a, b); }
-		HRESULT _stdcall Acquire(void);
-		HRESULT _stdcall Unacquire(void) { return m_pRealDevice->Unacquire(); }
-		HRESULT _stdcall SetDataFormat(const DIDATAFORMAT* a) { return m_pRealDevice->SetDataFormat(a); }
-		HRESULT _stdcall SetEventNotification(HANDLE a) { return m_pRealDevice->SetEventNotification(a); }
-		HRESULT _stdcall GetObjectInfo(LPDIDEVICEOBJECTINSTANCEA a, DWORD b, DWORD c) { return m_pRealDevice->GetObjectInfo(a, b, c); }
-		HRESULT _stdcall GetDeviceInfo(LPDIDEVICEINSTANCEA a) { return m_pRealDevice->GetDeviceInfo(a); }
-		HRESULT _stdcall RunControlPanel(HWND a, DWORD b) { return m_pRealDevice->RunControlPanel(a, b); }
-		HRESULT _stdcall Initialize(HINSTANCE a, DWORD b, REFGUID c) { return m_pRealDevice->Initialize(a, b, c); }
-		HRESULT _stdcall CreateEffect(REFGUID a, LPCDIEFFECT b, LPDIRECTINPUTEFFECT* c, LPUNKNOWN d) { return m_pRealDevice->CreateEffect(a, b, c, d); }
-		HRESULT _stdcall EnumEffects(LPDIENUMEFFECTSCALLBACKA a, LPVOID b, DWORD c) { return m_pRealDevice->EnumEffects(a, b, c); }
-		HRESULT _stdcall GetEffectInfo(LPDIEFFECTINFOA a, REFGUID b) { return m_pRealDevice->GetEffectInfo(a, b); }
-		HRESULT _stdcall GetForceFeedbackState(LPDWORD a) { return m_pRealDevice->GetForceFeedbackState(a); }
-		HRESULT _stdcall SendForceFeedbackCommand(DWORD a) { return m_pRealDevice->SendForceFeedbackCommand(a); }
-		HRESULT _stdcall EnumCreatedEffectObjects(LPDIENUMCREATEDEFFECTOBJECTSCALLBACK a, LPVOID b, DWORD c) { return m_pRealDevice->EnumCreatedEffectObjects(a, b, c); }
-		HRESULT _stdcall Escape(LPDIEFFESCAPE a) { return m_pRealDevice->Escape(a); }
-		HRESULT _stdcall Poll(void) { return m_pRealDevice->Poll(); }
-		HRESULT _stdcall SendDeviceData(DWORD a, LPCDIDEVICEOBJECTDATA b, LPDWORD c, DWORD d) { return m_pRealDevice->SendDeviceData(a, b, c, d); }
-		HRESULT _stdcall EnumEffectsInFile(LPCSTR a, LPDIENUMEFFECTSINFILECALLBACK b, LPVOID c, DWORD d) { return m_pRealDevice->EnumEffectsInFile(a, b, c, d); }
-		HRESULT _stdcall WriteEffectToFile(LPCSTR a, DWORD b, LPDIFILEEFFECT c, DWORD d) { return m_pRealDevice->WriteEffectToFile(a, b, c, d); }
-		HRESULT _stdcall BuildActionMap(LPDIACTIONFORMATA a, LPCSTR b, DWORD c) { return m_pRealDevice->BuildActionMap(a, b, c); }
-		HRESULT _stdcall SetActionMap(LPDIACTIONFORMATA a, LPCSTR b, DWORD c) { return m_pRealDevice->SetActionMap(a, b, c); }
-		HRESULT _stdcall GetImageInfo(LPDIDEVICEIMAGEINFOHEADERA a) { return m_pRealDevice->GetImageInfo(a); }
-
-		static Set<DirectInputDeviceWrapper*> s_devices;
-
-	private:
-
-		IDirectInputDevice8A* m_pRealDevice;
-
-		GUID m_guid;
-	};
-
-	struct DirectInputWrapper : IDirectInput8A
-	{
-		TP_ALLOCATOR
-
-			DirectInputWrapper(IDirectInput8A* aInput) noexcept;
-
-		ULONG _stdcall AddRef(void) override { return m_pDirectInput->AddRef(); }
-		ULONG _stdcall Release(void) override;
-
-		HRESULT _stdcall CreateDevice(REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* device, LPUNKNOWN unused) override;
-		HRESULT _stdcall QueryInterface(REFIID a, LPVOID* b) override { return m_pDirectInput->QueryInterface(a, b); }
-		HRESULT _stdcall EnumDevices(DWORD a, LPDIENUMDEVICESCALLBACKA b, LPVOID c, DWORD d) override { return m_pDirectInput->EnumDevices(a, b, c, d); }
-		HRESULT _stdcall GetDeviceStatus(REFGUID r) override { return m_pDirectInput->GetDeviceStatus(r); }
-		HRESULT _stdcall RunControlPanel(HWND a, DWORD b) override { return m_pDirectInput->RunControlPanel(a, b); }
-		HRESULT _stdcall Initialize(HINSTANCE a, DWORD b) override { return m_pDirectInput->Initialize(a, b); }
-		HRESULT _stdcall FindDevice(REFGUID a, LPCSTR b, LPGUID c) override { return m_pDirectInput->FindDevice(a, b, c); }
-		HRESULT _stdcall EnumDevicesBySemantics(LPCSTR a, LPDIACTIONFORMATA b, LPDIENUMDEVICESBYSEMANTICSCBA c, LPVOID d, DWORD e) override { return m_pDirectInput->EnumDevicesBySemantics(a, b, c, d, e); }
-		HRESULT _stdcall ConfigureDevices(LPDICONFIGUREDEVICESCALLBACK a, LPDICONFIGUREDEVICESPARAMSA b, DWORD c, LPVOID d) override { return m_pDirectInput->ConfigureDevices(a, b, c, d); }
-
-	private:
-
-		IDirectInput8A* m_pDirectInput;
-		DirectInputDeviceWrapper* m_pDevice;
-	};
-
-	DirectInputWrapper::DirectInputWrapper(IDirectInput8A* apDirectInput) noexcept
-		: m_pDirectInput(apDirectInput)
-		, m_pDevice(nullptr)
-	{
-	}
-
-	HRESULT _stdcall DirectInputWrapper::CreateDevice(REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused)
-	{
-		const auto result = m_pDirectInput->CreateDevice(typeGuid, reinterpret_cast<LPDIRECTINPUTDEVICE8A*>(&m_pDevice), unused);
-
-		if (result == DI_OK)
-		{
-			*apDevice = New<DirectInputDeviceWrapper>(m_pDevice, typeGuid);
-		}
-
-		return result;
-	}
-
-	ULONG _stdcall DirectInputWrapper::Release(void)
-	{
-		const auto count = m_pDirectInput->Release();
-
-		if (!count)
-		{
-			Delete(this);
-		}
-
-		return count;
-	}
-
-	Set<DirectInputDeviceWrapper*> DirectInputDeviceWrapper::s_devices;
-
-	DirectInputDeviceWrapper::DirectInputDeviceWrapper(IDirectInputDevice8A* aDevice, GUID aGuid) noexcept
-		: m_pRealDevice(aDevice)
-		, m_guid(aGuid)
-	{
-		s_devices.insert(this);
-	}
-
-	HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceState(DWORD outDataLen, LPVOID outData)
+	HRESULT _stdcall HookIDirectInputDeviceA_GetDeviceState(IDirectInputDeviceA* apDevice, DWORD outDataLen, LPVOID outData)
 	{
 		if (DInputHook::Get().IsEnabled())
 		{
@@ -126,14 +28,20 @@ namespace TiltedPhoques
 			return 0;
 		}
 
-		return m_pRealDevice->GetDeviceState(outDataLen, outData);
+		return IDirectInputDevice_GetDeviceState(apDevice, outDataLen, outData);
 	}
 
-	HRESULT _stdcall DirectInputDeviceWrapper::GetDeviceData(DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags)
+	HRESULT _stdcall HookIDirectInputDeviceA_GetDeviceData(IDirectInputDeviceA* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags)
 	{
 		auto& input = DInputHook::Get();
 
-		const auto result = m_pRealDevice->GetDeviceData(dataSize, outData, outDataLen, flags);
+		const auto result = IDirectInputDevice_GetDeviceData(apDevice, dataSize, outData, outDataLen, flags);
+
+		DIDEVICEINSTANCEA instanceInfo;
+		if(IDirectInputDevice_GetDeviceInfo(apDevice, &instanceInfo) != DI_OK)
+		{
+			return result;
+		}
 
 		if (input.IsEnabled())
 		{
@@ -142,7 +50,7 @@ namespace TiltedPhoques
 			return result;
 		}
 
-		if (m_guid == GUID_SysKeyboard)
+		if (instanceInfo.guidInstance == GUID_SysKeyboard)
 		{
 			for (DWORD i = 0; i < *outDataLen; ++i)
 			{
@@ -156,26 +64,29 @@ namespace TiltedPhoques
 		return result;
 	}
 
-	ULONG _stdcall DirectInputDeviceWrapper::Release(void)
+	HRESULT _stdcall HookIDirectInputA_CreateDevice(IDirectInput8A* pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused)
 	{
-		const auto count = m_pRealDevice->Release();
+		const auto result = RealIDirectInputA_CreateDevice(pDirectInput, typeGuid, apDevice, unused);
 
-		if (count == 0)
+		if (result == DI_OK)
 		{
-			s_devices.erase(this);
-			Delete(this);
+			s_devices.insert(*apDevice);
+
+			if(RealIDirectInputDevice8A_GetDeviceState == nullptr)
+			{
+				RealIDirectInputDevice8A_GetDeviceState = (*apDevice)->lpVtbl->GetDeviceState;
+				TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceState, HookIDirectInputDeviceA_GetDeviceState);
+			}
+
+			if(RealIDirectInputDevice8A_GetDeviceData == nullptr)
+			{
+				RealIDirectInputDevice8A_GetDeviceData = (*apDevice)->lpVtbl->GetDeviceData;
+				TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceData, HookIDirectInputDeviceA_GetDeviceData);
+			}
 		}
 
-		return count;
+		return result;
 	}
-
-	HRESULT _stdcall DirectInputDeviceWrapper::Acquire(void)
-	{
-		return m_pRealDevice->Acquire();
-	}
-
-	using TDirectInput8Create = HRESULT(_stdcall*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
-	static TDirectInput8Create RealDirectInput8Create;
 
 	static HRESULT _stdcall HookDirectInput8Create(HINSTANCE instance, DWORD version, REFIID iid, LPVOID* out, LPUNKNOWN outer)
 	{
@@ -183,9 +94,10 @@ namespace TiltedPhoques
 
 		const auto result = RealDirectInput8Create(instance, version, iid, (LPVOID*)& pDirectInput, outer);
 
-		if (result == DI_OK)
+		if (result == DI_OK && RealIDirectInputA_CreateDevice == nullptr)
 		{
-			*out = New<DirectInputWrapper>(pDirectInput);
+			RealIDirectInputA_CreateDevice = pDirectInput->lpVtbl->CreateDevice;
+			TP_HOOK_IMMEDIATE(&RealIDirectInputA_CreateDevice, HookIDirectInputA_CreateDevice);
 		}
 
 		return result;
@@ -218,17 +130,17 @@ namespace TiltedPhoques
 
 	void DInputHook::Acquire() const noexcept
 	{
-		for (auto& device : DirectInputDeviceWrapper::s_devices)
+		for (auto& device : s_devices)
 		{
-			device->Acquire();
+			IDirectInputDevice_Acquire(device);
 		}
 	}
 
 	void DInputHook::Unacquire() const noexcept
 	{
-		for (auto& device : DirectInputDeviceWrapper::s_devices)
+		for (auto& device : s_devices)
 		{
-			device->Unacquire();
+			IDirectInputDevice_Unacquire(device);
 		}
 	}
 
@@ -256,9 +168,9 @@ namespace TiltedPhoques
 
 		if (m_enabled)
 		{
-			for (const auto pDevice : DirectInputDeviceWrapper::s_devices)
+			for (const auto pDevice : s_devices)
 			{
-				pDevice->Acquire();
+				IDirectInputDevice_Acquire(pDevice);
 			}
 
 			device[0].dwFlags = 0;
@@ -268,9 +180,9 @@ namespace TiltedPhoques
 		}
 		else
 		{
-			for (const auto pDevice : DirectInputDeviceWrapper::s_devices)
+			for (const auto pDevice : s_devices)
 			{
-				pDevice->Unacquire();
+				IDirectInputDevice_Unacquire(pDevice);
 			}
 		}
 	}

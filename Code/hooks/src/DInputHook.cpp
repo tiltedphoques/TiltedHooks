@@ -9,8 +9,8 @@
 namespace TiltedPhoques
 {
 	using TIDirectInputA_CreateDevice = HRESULT(_stdcall*)(IDirectInput8A* pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused);
-	using TIDirectInputDevice8A_GetDeviceState =  HRESULT(_stdcall*)(IDirectInputDevice8A* apDevice, DWORD outDataLen, LPVOID outData);
-	using TIDirectInputDevice8A_GetDeviceData =  HRESULT(_stdcall*)(IDirectInputDevice8A* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags);
+	using TIDirectInputDevice8A_GetDeviceState =  HRESULT(_stdcall*)(IDirectInputDeviceA* apDevice, DWORD outDataLen, LPVOID outData);
+	using TIDirectInputDevice8A_GetDeviceData =  HRESULT(_stdcall*)(IDirectInputDeviceA* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags);
 	using TDirectInput8Create = HRESULT(_stdcall*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 
 	static TIDirectInputA_CreateDevice RealIDirectInputA_CreateDevice = nullptr;
@@ -35,10 +35,11 @@ namespace TiltedPhoques
 	{
 		auto& input = DInputHook::Get();
 
-		const auto result = IDirectInputDevice_GetDeviceData(apDevice, dataSize, outData, outDataLen, flags);
+		const auto result = RealIDirectInputDevice8A_GetDeviceData(apDevice, dataSize, outData, outDataLen, flags);
 
 		DIDEVICEINSTANCEA instanceInfo;
-		if(IDirectInputDevice_GetDeviceInfo(apDevice, &instanceInfo) != DI_OK)
+		instanceInfo.dwSize = sizeof(instanceInfo);
+		if (IDirectInputDevice_GetDeviceInfo(apDevice, &instanceInfo) != DI_OK)
 		{
 			return result;
 		}
@@ -72,15 +73,15 @@ namespace TiltedPhoques
 		{
 			s_devices.insert(*apDevice);
 
-			if(RealIDirectInputDevice8A_GetDeviceState == nullptr)
+			if (RealIDirectInputDevice8A_GetDeviceState == nullptr)
 			{
-				RealIDirectInputDevice8A_GetDeviceState = (*apDevice)->lpVtbl->GetDeviceState;
+				RealIDirectInputDevice8A_GetDeviceState = reinterpret_cast<TIDirectInputDevice8A_GetDeviceState>((*apDevice)->lpVtbl->GetDeviceState);
 				TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceState, HookIDirectInputDeviceA_GetDeviceState);
 			}
 
-			if(RealIDirectInputDevice8A_GetDeviceData == nullptr)
+			if (RealIDirectInputDevice8A_GetDeviceData == nullptr)
 			{
-				RealIDirectInputDevice8A_GetDeviceData = (*apDevice)->lpVtbl->GetDeviceData;
+				RealIDirectInputDevice8A_GetDeviceData = reinterpret_cast<TIDirectInputDevice8A_GetDeviceData>((*apDevice)->lpVtbl->GetDeviceData);
 				TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceData, HookIDirectInputDeviceA_GetDeviceData);
 			}
 		}
@@ -92,7 +93,9 @@ namespace TiltedPhoques
 	{
 		IDirectInput8A* pDirectInput = nullptr;
 
-		const auto result = RealDirectInput8Create(instance, version, iid, (LPVOID*)& pDirectInput, outer);
+		const auto result = RealDirectInput8Create(instance, version, iid, reinterpret_cast<LPVOID*>(&pDirectInput), outer);
+
+		*out = static_cast<LPVOID>(pDirectInput);
 
 		if (result == DI_OK && RealIDirectInputA_CreateDevice == nullptr)
 		{
@@ -168,10 +171,7 @@ namespace TiltedPhoques
 
 		if (m_enabled)
 		{
-			for (const auto pDevice : s_devices)
-			{
-				IDirectInputDevice_Acquire(pDevice);
-			}
+			Acquire();
 
 			device[0].dwFlags = 0;
 			device[1].dwFlags = 0;
@@ -180,10 +180,7 @@ namespace TiltedPhoques
 		}
 		else
 		{
-			for (const auto pDevice : s_devices)
-			{
-				IDirectInputDevice_Unacquire(pDevice);
-			}
+			Unacquire();
 		}
 	}
 }

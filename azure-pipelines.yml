@@ -1,0 +1,23 @@
+jobs:
+  - job: Windows_x32
+    displayName: Windows x32
+    pool:
+      vmImage: windows-2019
+
+    variables:
+      platform: Win32
+ 
+    steps:
+      - template: .ci/windows-build.yml
+
+  - job: Windows_x64
+    displayName: Windows x64
+    pool:
+      vmImage: windows-2019
+
+    variables:
+      platform: x64
+
+    steps:
+      - template: .ci/windows-build.yml
+

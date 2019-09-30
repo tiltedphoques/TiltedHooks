@@ -2,7 +2,7 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
     project ("Hooks")
         kind ("StaticLib")
         language ("C++")
-        
+
         links
         {
             "dxguid.lib",
@@ -13,15 +13,15 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
             "MSVCRT.LIB",
             "DirectXTK.lib"
         }
-        
+
         includedirs
         {
             "$(DXSDK_DIR)/Include",
             basePath .. "/ThirdParty/DirectXTK/include"
         }
-        
+
         filter { "architecture:*86" }
-            libdirs 
+            libdirs
             {
                 "$(DXSDK_DIR)/Lib/x86",
                 "$(VsInstallDir)DIA SDK/lib",
@@ -29,13 +29,13 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
             }
 
         filter { "architecture:*64" }
-            libdirs 
+            libdirs
             {
                 "$(DXSDK_DIR)/Lib/x64",
                 "$(VsInstallDir)DIA SDK/lib/amd64",
                 basePath .. "/ThirdParty/DirectXTK/lib/x64"
             }
-            
+
         filter {}
 
         includedirs
@@ -51,6 +51,6 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
             basePath .. "/Code/hooks/include/**.hpp",
             basePath .. "/Code/hooks/src/**.cpp",
         }
-        
-        
+
+
 end

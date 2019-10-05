@@ -11,11 +11,13 @@ namespace TiltedPhoques
     using TIDirectInputA_CreateDevice = HRESULT(_stdcall*)(IDirectInput8A* pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused);
     using TIDirectInputDevice8A_GetDeviceState =  HRESULT(_stdcall*)(IDirectInputDeviceA* apDevice, DWORD outDataLen, LPVOID outData);
     using TIDirectInputDevice8A_GetDeviceData =  HRESULT(_stdcall*)(IDirectInputDeviceA* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags);
+    using TIDirectInputDevice8A_Release =  ULONG(_stdcall*)(IDirectInputDeviceA* apDevice);
     using TDirectInput8Create = HRESULT(_stdcall*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 
     static TIDirectInputA_CreateDevice RealIDirectInputA_CreateDevice = nullptr;
     static TIDirectInputDevice8A_GetDeviceState RealIDirectInputDevice8A_GetDeviceState = nullptr;
     static TIDirectInputDevice8A_GetDeviceData RealIDirectInputDevice8A_GetDeviceData = nullptr;
+    static TIDirectInputDevice8A_Release RealIDirectInputDevice8A_Release = nullptr;
     static TDirectInput8Create RealDirectInput8Create = nullptr;
 
     static Set<LPDIRECTINPUTDEVICE8A> s_devices;
@@ -65,6 +67,17 @@ namespace TiltedPhoques
         return result;
     }
 
+    ULONG _stdcall HookIDirectInputDeviceA_Release(IDirectInputDeviceA* apDevice)
+    {
+        const auto result = RealIDirectInputDevice8A_Release(apDevice);
+        if (result == 0)
+        {
+            s_devices.erase((LPDIRECTINPUTDEVICE8A)apDevice);
+        }
+        
+        return result;
+    }
+
     HRESULT _stdcall HookIDirectInputA_CreateDevice(IDirectInput8A* pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused)
     {
         const auto result = RealIDirectInputA_CreateDevice(pDirectInput, typeGuid, apDevice, unused);
@@ -83,6 +96,12 @@ namespace TiltedPhoques
             {
                 RealIDirectInputDevice8A_GetDeviceData = reinterpret_cast<TIDirectInputDevice8A_GetDeviceData>((*apDevice)->lpVtbl->GetDeviceData);
                 TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceData, HookIDirectInputDeviceA_GetDeviceData);
+            }
+            
+            if (RealIDirectInputDevice8A_Release == nullptr)
+            {
+                RealIDirectInputDevice8A_Release = reinterpret_cast<TIDirectInputDevice8A_Release>((*apDevice)->lpVtbl->Release);
+                TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_Release, HookIDirectInputDeviceA_Release);
             }
         }
 

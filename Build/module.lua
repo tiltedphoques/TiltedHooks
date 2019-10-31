@@ -1,4 +1,21 @@
-function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
+premake.extensions.hooks = {}
+
+function hooks_parent_path()
+    local str = debug.getinfo(2, "S").source:sub(2)
+    local dir =  str:match("(.*/)"):sub(0,-2)
+    local index = string.find(dir, "/[^/]*$")
+    return dir:sub(0, index)
+end
+
+function hooks_generate()
+    if premake.extensions.hooks.generated == true then
+        return
+    end
+
+    local basePath = premake.extensions.hooks.path
+    local coreBasePath = premake.extensions.core.path
+    local reverseBasePath = premake.extensions.reverse.path
+
     project ("Hooks")
         kind ("StaticLib")
         language ("C++")
@@ -52,5 +69,8 @@ function CreateHooksProject(basePath, reverseBasePath, coreBasePath)
             basePath .. "/Code/hooks/src/**.cpp",
         }
 
-
+    premake.extensions.hooks.generated = true
 end
+
+premake.extensions.hooks.path = hooks_parent_path()
+premake.extensions.hooks.generate = hooks_generate

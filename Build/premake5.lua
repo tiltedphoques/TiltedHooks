@@ -58,7 +58,7 @@ workspace ("Tilted Hooks")
     filter {}
 
     group ("Libraries")
-        CreateHooksProject("../", "../../TiltedReverse", "../../TiltedCore")
-
-    LazyReverseProjects("../../TiltedReverse", "../../TiltedCore")
+        premake.extensions.core.generate()
+        premake.extensions.reverse.generate()
+        premake.extensions.hooks.generate()
 

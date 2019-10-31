@@ -4,7 +4,7 @@ steps:
       git clone --recurse-submodules https://github.com/tiltedphoques/TiltedReverse.git ../TiltedReverse
     displayName: Clone core libs
 
-  - pwsh: Invoke-WebRequest https://download.skyrim-together.com/DXSDK.zip -OutFile DXSDK.zip
+  - pwsh: Invoke-WebRequest https://download.skyrim-together.com/tiltedphoques/public/DXSDK.zip -OutFile DXSDK.zip
     displayName: Download DirectX SDK
 
   - pwsh: Expand-Archive -Path DXSDK.zip -DestinationPath DXSDK

@@ -5,24 +5,62 @@
 #include <dinput.h>
 
 #include <FunctionHook.hpp>
+#include <iostream>
 
 namespace TiltedPhoques
 {
-    using TIDirectInputA_CreateDevice = HRESULT(_stdcall*)(IDirectInput8A* pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A* apDevice, LPUNKNOWN unused);
-    using TIDirectInputDevice8A_GetDeviceState =  HRESULT(_stdcall*)(IDirectInputDeviceA* apDevice, DWORD outDataLen, LPVOID outData);
-    using TIDirectInputDevice8A_GetDeviceData =  HRESULT(_stdcall*)(IDirectInputDeviceA* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags);
-    using TIDirectInputDevice8A_Release =  ULONG(_stdcall*)(IDirectInputDeviceA* apDevice);
+    struct StubIDirectInputDevice8A
+    {
+        StubIDirectInputDevice8A(IDirectInputDevice8A* apDevice) : m_pDevice(apDevice) {}
+
+        virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, LPVOID* ppvObj) PURE { return IDirectInputDevice8_QueryInterface(m_pDevice, riid, ppvObj); }
+        virtual ULONG STDMETHODCALLTYPE AddRef() PURE { return IDirectInputDevice8_AddRef(m_pDevice); }
+        virtual ULONG STDMETHODCALLTYPE Release() PURE;
+
+        /*** IDirectInputDevice8A methods ***/
+        virtual HRESULT STDMETHODCALLTYPE GetCapabilities(LPDIDEVCAPS a) PURE { return IDirectInputDevice8_GetCapabilities(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE EnumObjects(LPDIENUMDEVICEOBJECTSCALLBACKA a, LPVOID b, DWORD c) PURE { return IDirectInputDevice8_EnumObjects(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE GetProperty(REFGUID a, LPDIPROPHEADER b) PURE { return IDirectInputDevice8_GetProperty(m_pDevice, a, b); }
+        virtual HRESULT STDMETHODCALLTYPE SetProperty(REFGUID a, LPCDIPROPHEADER b) PURE { return IDirectInputDevice8_SetProperty(m_pDevice, a, b); }
+        virtual HRESULT STDMETHODCALLTYPE Acquire() PURE { return IDirectInputDevice8_Acquire(m_pDevice); }
+        virtual HRESULT STDMETHODCALLTYPE Unacquire() PURE { return IDirectInputDevice8_Unacquire(m_pDevice); }
+        virtual HRESULT STDMETHODCALLTYPE GetDeviceState(DWORD a, LPVOID b) PURE;
+        virtual HRESULT STDMETHODCALLTYPE GetDeviceData(DWORD a, LPDIDEVICEOBJECTDATA b, LPDWORD c, DWORD d) PURE;
+        virtual HRESULT STDMETHODCALLTYPE SetDataFormat(LPCDIDATAFORMAT a) PURE { return IDirectInputDevice8_SetDataFormat(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE SetEventNotification(HANDLE a) PURE { return IDirectInputDevice8_SetEventNotification(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE SetCooperativeLevel(HWND a, DWORD b) PURE { return IDirectInputDevice8_SetCooperativeLevel(m_pDevice, a, b); }
+        virtual HRESULT STDMETHODCALLTYPE GetObjectInfo(LPDIDEVICEOBJECTINSTANCEA a, DWORD b, DWORD c) PURE { return IDirectInputDevice8_GetObjectInfo(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE GetDeviceInfo(LPDIDEVICEINSTANCEA a) PURE { return IDirectInputDevice8_GetDeviceInfo(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE RunControlPanel(HWND a, DWORD b) PURE { return IDirectInputDevice8_RunControlPanel(m_pDevice, a, b); }
+        virtual HRESULT STDMETHODCALLTYPE Initialize(HINSTANCE a, DWORD b, REFGUID c) PURE { return IDirectInputDevice8_Initialize(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE CreateEffect(REFGUID a, LPCDIEFFECT b, LPDIRECTINPUTEFFECT* c, LPUNKNOWN d) PURE { return IDirectInputDevice8_CreateEffect(m_pDevice, a, b, c, d); }
+        virtual HRESULT STDMETHODCALLTYPE EnumEffects(LPDIENUMEFFECTSCALLBACKA a, LPVOID b, DWORD c) PURE { return IDirectInputDevice8_EnumEffects(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE GetEffectInfo(LPDIEFFECTINFOA a, REFGUID b) PURE { return IDirectInputDevice8_GetEffectInfo(m_pDevice, a, b); }
+        virtual HRESULT STDMETHODCALLTYPE GetForceFeedbackState(LPDWORD a) PURE { return IDirectInputDevice8_GetForceFeedbackState(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE SendForceFeedbackCommand(DWORD a) PURE { return IDirectInputDevice8_SendForceFeedbackCommand(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE EnumCreatedEffectObjects(LPDIENUMCREATEDEFFECTOBJECTSCALLBACK a, LPVOID b, DWORD c) PURE { return IDirectInputDevice8_EnumCreatedEffectObjects(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE Escape(LPDIEFFESCAPE a) PURE { return IDirectInputDevice8_Escape(m_pDevice, a); }
+        virtual HRESULT STDMETHODCALLTYPE Poll() PURE { return IDirectInputDevice8_Poll(m_pDevice); }
+        virtual HRESULT STDMETHODCALLTYPE SendDeviceData(DWORD a, LPCDIDEVICEOBJECTDATA b, LPDWORD c, DWORD d) PURE { return IDirectInputDevice8_SendDeviceData(m_pDevice, a, b, c, d); }
+        virtual HRESULT STDMETHODCALLTYPE EnumEffectsInFile(LPCSTR a, LPDIENUMEFFECTSINFILECALLBACK b, LPVOID c, DWORD d) PURE { return IDirectInputDevice8_EnumEffectsInFile(m_pDevice, a, b, c, d); }
+        virtual HRESULT STDMETHODCALLTYPE WriteEffectToFile(LPCSTR a, DWORD b, LPDIFILEEFFECT c, DWORD d) PURE { return IDirectInputDevice8_WriteEffectToFile(m_pDevice, a, b, c, d); }
+        virtual HRESULT STDMETHODCALLTYPE BuildActionMap(LPDIACTIONFORMATA a, LPCSTR b, DWORD c) PURE { return IDirectInputDevice8_BuildActionMap(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE SetActionMap(LPDIACTIONFORMATA a, LPCSTR b, DWORD c) PURE { return IDirectInputDevice8_SetActionMap(m_pDevice, a, b, c); }
+        virtual HRESULT STDMETHODCALLTYPE GetImageInfo(LPDIDEVICEIMAGEINFOHEADERA a) PURE { return IDirectInputDevice8_GetImageInfo(m_pDevice, a); }
+
+    private:
+        IDirectInputDevice8A* m_pDevice;
+    };
+
+    using TIDirectInputA_CreateDevice = HRESULT(_stdcall*)(IDirectInput8A * pDirectInput, REFGUID typeGuid, LPDIRECTINPUTDEVICE8A * apDevice, LPUNKNOWN unused);
     using TDirectInput8Create = HRESULT(_stdcall*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 
     static TIDirectInputA_CreateDevice RealIDirectInputA_CreateDevice = nullptr;
-    static TIDirectInputDevice8A_GetDeviceState RealIDirectInputDevice8A_GetDeviceState = nullptr;
-    static TIDirectInputDevice8A_GetDeviceData RealIDirectInputDevice8A_GetDeviceData = nullptr;
-    static TIDirectInputDevice8A_Release RealIDirectInputDevice8A_Release = nullptr;
     static TDirectInput8Create RealDirectInput8Create = nullptr;
 
-    static Set<LPDIRECTINPUTDEVICE8A> s_devices;
+    static Set<StubIDirectInputDevice8A*> s_devices;
 
-    HRESULT _stdcall HookIDirectInputDeviceA_GetDeviceState(IDirectInputDeviceA* apDevice, DWORD outDataLen, LPVOID outData)
+    HRESULT _stdcall StubIDirectInputDevice8A::GetDeviceState(DWORD outDataLen, LPVOID outData)
     {
         if (DInputHook::Get().IsEnabled())
         {
@@ -30,18 +68,18 @@ namespace TiltedPhoques
             return 0;
         }
 
-        return IDirectInputDevice_GetDeviceState(apDevice, outDataLen, outData);
+        return IDirectInputDevice8_GetDeviceState(m_pDevice, outDataLen, outData);
     }
 
-    HRESULT _stdcall HookIDirectInputDeviceA_GetDeviceData(IDirectInputDeviceA* apDevice, DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags)
+    HRESULT _stdcall StubIDirectInputDevice8A::GetDeviceData(DWORD dataSize, LPDIDEVICEOBJECTDATA outData, LPDWORD outDataLen, DWORD flags)
     {
         auto& input = DInputHook::Get();
 
-        const auto result = RealIDirectInputDevice8A_GetDeviceData(apDevice, dataSize, outData, outDataLen, flags);
+        const auto result = IDirectInputDevice8_GetDeviceData(m_pDevice, dataSize, outData, outDataLen, flags);
 
         DIDEVICEINSTANCEA instanceInfo;
         instanceInfo.dwSize = sizeof(instanceInfo);
-        if (IDirectInputDevice_GetDeviceInfo(apDevice, &instanceInfo) != DI_OK)
+        if (IDirectInputDevice8_GetDeviceInfo(m_pDevice, &instanceInfo) != DI_OK)
         {
             return result;
         }
@@ -67,14 +105,16 @@ namespace TiltedPhoques
         return result;
     }
 
-    ULONG _stdcall HookIDirectInputDeviceA_Release(IDirectInputDeviceA* apDevice)
+    ULONG _stdcall StubIDirectInputDevice8A::Release()
     {
-        const auto result = RealIDirectInputDevice8A_Release(apDevice);
+        const auto result = IDirectInputDevice8_Release(m_pDevice);
         if (result == 0)
         {
-            s_devices.erase((LPDIRECTINPUTDEVICE8A)apDevice);
+            s_devices.erase(this);
+
+            delete this;
         }
-        
+
         return result;
     }
 
@@ -84,25 +124,11 @@ namespace TiltedPhoques
 
         if (result == DI_OK)
         {
-            s_devices.insert(*apDevice);
+            auto pStub = new StubIDirectInputDevice8A(*apDevice);
 
-            if (RealIDirectInputDevice8A_GetDeviceState == nullptr)
-            {
-                RealIDirectInputDevice8A_GetDeviceState = reinterpret_cast<TIDirectInputDevice8A_GetDeviceState>((*apDevice)->lpVtbl->GetDeviceState);
-                TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceState, HookIDirectInputDeviceA_GetDeviceState);
-            }
+            s_devices.insert(pStub);
 
-            if (RealIDirectInputDevice8A_GetDeviceData == nullptr)
-            {
-                RealIDirectInputDevice8A_GetDeviceData = reinterpret_cast<TIDirectInputDevice8A_GetDeviceData>((*apDevice)->lpVtbl->GetDeviceData);
-                TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_GetDeviceData, HookIDirectInputDeviceA_GetDeviceData);
-            }
-            
-            if (RealIDirectInputDevice8A_Release == nullptr)
-            {
-                RealIDirectInputDevice8A_Release = reinterpret_cast<TIDirectInputDevice8A_Release>((*apDevice)->lpVtbl->Release);
-                TP_HOOK_IMMEDIATE(&RealIDirectInputDevice8A_Release, HookIDirectInputDeviceA_Release);
-            }
+            *apDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(pStub);
         }
 
         return result;
@@ -154,7 +180,7 @@ namespace TiltedPhoques
     {
         for (auto& device : s_devices)
         {
-            IDirectInputDevice_Acquire(device);
+            device->Acquire();
         }
     }
 
@@ -162,7 +188,7 @@ namespace TiltedPhoques
     {
         for (auto& device : s_devices)
         {
-            IDirectInputDevice_Unacquire(device);
+            device->Unacquire();
         }
     }
 

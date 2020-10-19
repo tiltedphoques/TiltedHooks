@@ -27,7 +27,6 @@ function hooks_generate()
             "d3d9.lib",
             "d3d11.lib",
             "d3dx9.lib",
-            "MSVCRT.LIB",
             "DirectXTK.lib"
         }
 

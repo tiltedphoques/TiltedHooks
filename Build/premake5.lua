@@ -1,5 +1,15 @@
 require("premake", ">=5.0.0-alpha10")
 
+premake.extensions.directx_dir = "../ThirdParty/DXSDK/";
+
+if os.isdir(premake.extensions.directx_dir) == false and os.istarget("Windows") == true then
+    print("Downloading DirectX dependencies...")
+    http.download("https://download.skyrim-together.com/DXSDK.zip", "DXSDK.zip")
+    print("Extracting DirectX dependencies...")
+    zip.extract("DXSDK.zip", premake.extensions.directx_dir)
+    os.remove("DXSDK.zip")
+end
+
 include "module.lua"
 include "../../TiltedCore/Build/module.lua"
 include "../../TiltedReverse/Build/module.lua"

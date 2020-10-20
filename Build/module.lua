@@ -32,14 +32,18 @@ function hooks_generate()
 
         includedirs
         {
-            "$(DXSDK_DIR)/Include",
-            basePath .. "/ThirdParty/DirectXTK/include"
+            basePath .. "/ThirdParty/DirectXTK/include",
+            premake.extensions.directx_dir .. "/Include",
+            reverseBasePath .. "/Code/reverse/include/",
+            coreBasePath .. "/Code/core/include/",
+            basePath .. "/Code/hooks/include/",
+            basePath .. "/ThirdParty/",
         }
 
         filter { "architecture:*86" }
             libdirs
             {
-                "$(DXSDK_DIR)/Lib/x86",
+                premake.extensions.directx_dir .. "/Lib/x86",
                 "$(VsInstallDir)DIA SDK/lib",
                 basePath .. "/ThirdParty/DirectXTK/lib/x32"
             }
@@ -47,20 +51,12 @@ function hooks_generate()
         filter { "architecture:*64" }
             libdirs
             {
-                "$(DXSDK_DIR)/Lib/x64",
+                premake.extensions.directx_dir .. "/Lib/x64",
                 "$(VsInstallDir)DIA SDK/lib/amd64",
                 basePath .. "/ThirdParty/DirectXTK/lib/x64"
             }
 
         filter {}
-
-        includedirs
-        {
-            reverseBasePath .. "/Code/reverse/include/",
-            coreBasePath .. "/Code/core/include/",
-            basePath .. "/Code/hooks/include/",
-            basePath .. "/ThirdParty/",
-        }
 
         files
         {

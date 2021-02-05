@@ -2,7 +2,7 @@
 
 #include <Windows.h>
 
-#include <Meta.hpp>
+#include <TiltedCore/Meta.hpp>
 
 namespace TiltedPhoques
 {

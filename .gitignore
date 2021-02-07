@@ -8,3 +8,5 @@ Build/bin
 *__pycache__*
 
 ThirdParty/DXSDK
+.xmake/*
+build/*

@@ -1,6 +1,6 @@
-#include <WindowsHook.hpp>
+#include "WindowsHook.hpp"
 
-#include <FunctionHook.hpp>
+#include "FunctionHook.hpp"
 
 using TRegisterClassA = ATOM(__stdcall*)(const WNDCLASSA*);
 using TRegisterClassW = ATOM(__stdcall*)(const WNDCLASSW*);

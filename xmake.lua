@@ -21,7 +21,7 @@ target("TiltedHooks")
     add_files("Code/hooks/src/*.cpp")
     add_includedirs("Code/hooks/include/")
     add_headerfiles("Code/hooks/include/*.hpp", {prefixdir = "TiltedHooks"})
-    add_syslinks("dxguid.lib", "dinput8.lib", "d3d11.lib")
+    add_syslinks("dxguid", "dinput8", "d3d11")
     add_packages("tiltedcore", "mimalloc", "hopscotch-map")
     add_deps("TiltedReverse")
 

@@ -2,7 +2,7 @@ set_languages("cxx17")
 
 set_xmakever("2.5.1")
 
-add_requires("tiltedcore", "mimalloc", "hopscotch-map", {configs = {rltgenrandom = true }})
+add_requires("tiltedcore", "mimalloc", "hopscotch-map")
 add_requires("catch2")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release")

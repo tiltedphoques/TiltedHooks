@@ -2,7 +2,7 @@ set_languages("cxx17")
 
 set_xmakever("2.5.1")
 
-add_requires("tiltedcore", "hopscotch-map", "catch2")
+add_requires("tiltedcore", "hopscotch-map", "catch2", "mem")
 
 add_rules("mode.debug","mode.releasedbg", "mode.release")
 add_rules("plugin.vsxmake.autoupdate")
@@ -21,6 +21,6 @@ target("TiltedHooks")
     add_includedirs("Code/hooks/include/", {public = true})
     add_headerfiles("Code/hooks/include/*.hpp", {prefixdir = "TiltedHooks"})
     add_syslinks("dxguid", "dinput8", "d3d11")
-    add_packages("tiltedcore", "mimalloc", "hopscotch-map")
+    add_packages("tiltedcore", "mimalloc", "hopscotch-map", "mem")
     add_deps("TiltedReverse")
 

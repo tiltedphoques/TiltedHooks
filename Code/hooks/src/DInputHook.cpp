@@ -158,7 +158,7 @@ namespace TiltedPhoques
 
     DInputHook::DInputHook() noexcept
     {
-        SetToggleKeys({ DIK_RCONTROL });
+        SetToggleKeys({ DIK_F2, DIK_RCONTROL });
     }
 
     void DInputHook::SetToggleKeys(std::initializer_list<unsigned long> aKeys) noexcept

@@ -58,6 +58,9 @@ namespace TiltedPhoques
     static TIDirectInputA_CreateDevice RealIDirectInputA_CreateDevice = nullptr;
     static TDirectInput8Create RealDirectInput8Create = nullptr;
 
+    constexpr size_t kDirectInput8CreatePrologueSize = 16;
+    static std::array<uint8_t, kDirectInput8CreatePrologueSize> s_realDirectInput8CreatePrologue{}; 
+
     static Set<StubIDirectInputDevice8A*> s_devices;
 
     HRESULT _stdcall StubIDirectInputDevice8A::GetDeviceState(DWORD outDataLen, LPVOID outData)
@@ -134,10 +137,30 @@ namespace TiltedPhoques
         return result;
     }
 
+    static uint8_t* GetOriginalFunctionPrologue() noexcept
+    {
+        return reinterpret_cast<uint8_t*>(RealDirectInput8Create);
+    }
+
+    static void EnforceOriginalFunctionPrologue() noexcept
+    {
+        if (std::all_of(s_realDirectInput8CreatePrologue.begin(), s_realDirectInput8CreatePrologue.end(), [](uint8_t i) { return i == 0; }))
+            return;
+
+        const vp::ScopedContext prologueMemory(RealDirectInput8Create, kDirectInput8CreatePrologueSize);
+
+        bool hasOriginalPrologue = RtlEqualMemory(RealDirectInput8Create, s_realDirectInput8CreatePrologue.data(), kDirectInput8CreatePrologueSize);
+        if (!hasOriginalPrologue)
+        {
+            TiltedPhoques::Put(RealDirectInput8Create, s_realDirectInput8CreatePrologue);
+        }
+    }
+
     static HRESULT _stdcall HookDirectInput8Create(HINSTANCE instance, DWORD version, REFIID iid, LPVOID* out, LPUNKNOWN outer)
     {
-        IDirectInput8A* pDirectInput = nullptr;
+        EnforceOriginalFunctionPrologue();
 
+        IDirectInput8A* pDirectInput = nullptr;
         const auto result = RealDirectInput8Create(instance, version, iid, reinterpret_cast<LPVOID*>(&pDirectInput), outer);
 
         *out = static_cast<LPVOID>(pDirectInput);
@@ -154,6 +177,8 @@ namespace TiltedPhoques
     void DInputHook::Install() noexcept
     {
         TP_HOOK_IAT(DirectInput8Create, "dinput8.dll");
+        // Store original prologue to restore later
+        std::memcpy(s_realDirectInput8CreatePrologue.data(), GetOriginalFunctionPrologue(), kDirectInput8CreatePrologueSize);
     }
 
     DInputHook::DInputHook() noexcept
